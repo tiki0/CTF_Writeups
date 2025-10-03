@@ -2,7 +2,8 @@ This is my first ever writeup so bare with me haha.
 
 Notepad is a hard level PicoCTF challenge. It's relatively small at least code wise containing an app.py file that is just 22 lines of python, and here they are:
 
-'''
+
+```python
 from werkzeug.urls import url_fix
 from secrets import token_urlsafe
 from flask import Flask, request, render_template, redirect, url_for
@@ -27,10 +28,10 @@ def create():
     return redirect(name)
 '''
 
-
 Before anything I want to know where the flag will be stored on the docker container, heres the Dockerfile:
 
 '''
+
 # Dockerfile (fixed & pinned for lab testing)
 FROM python:3.9.2-slim-buster
 
@@ -61,11 +62,9 @@ EXPOSE 8000
 
 # Fix gunicorn CLI flags: use --user and --group properly and bind to port 8000
 CMD ["gunicorn", "-w", "16", "-t", "5", "--graceful-timeout", "0", "--user", "nobody", "--group", "nogroup", "-b", "0.0.0.0:8000", "app:app"]
-
 '''
 
 As you can see from 'COPY app.py flag.txt ./' the flag will just be a file in the root directory. From this I assumed this may be an LFI challenge or RCE.
-
 
 Now, Diving into te code it has some interesting behaviour. The code is made to save notes into a directory static as a .html file, it also saves the file as the first 128 characters of the note along with 8 random characters in the end.
 Immediately I attempted a directory traversal as the name of the file is being generated and then passed onto pythons open() function, which takes a filename that can include ../ ... interesting.
@@ -74,6 +73,7 @@ Now theres an issue, two characters are filtered out from the notes, that being 
 I wanted to see if I could find a way around the filtering and so I looked up the url_fix function from werkzeug. Heres the function:
 
 '''
+
 from werkzeug.urls import url_fix
 
 def url_fix_source(s, charset='utf-8'):
@@ -110,10 +110,10 @@ def url_fix_source(s, charset='utf-8'):
 
 Something really interesting here is that url_fix converts backslashes to forwardslashes... :)
 
-This was a clear way to bypass the forwardslash filter. 
+This was a clear way to bypass the forwardslash filter.
 Now, submitting a note with content '..\test' will write files to the apps main directory. I tested this in a docker file and it worked.
 Something I shouldve mentioned earlier is that the app can accept error templates when the notepad exceeds 512 characters of contains bad characters.
-The templates are stored in the templates directory within the apps main directory. 
+The templates are stored in the templates directory within the apps main directory.
 Templates are passed straing into python, interestingly they can execute python code inside curly braces. At this point I was sure this was a SSTI (Server Side Template Injection).
 Using the previous directory traversal vulnerability, I am able to place files in the templates/errors directory, which is exactly where python pulls errors from.
 Now, to execute the SSTI vulnerability I had to supply 128 random characters to not mess up the name (not entirely sure if this was required but it's more stable).
@@ -127,8 +127,8 @@ I could then access this file by passing an error parameter with the name of tha
 [ ADD IMAGE HERE ]
 
 Now, I need to be able to execute system commands, I could just read files but thats boring. Using the regular SSTI oneliner does not work because of the previously mentioned underscore '_' filtering, so we have to get creative.
-Using pythons 'attr' function. The only issue is we cant get by with just attr, this is because certain objects have underscores no matter what way you access it. For this we can use the byte representation of underscores in python: \x5f. 
-Now, we can get to the __builtins__ object in python which houses __getitem__ which from there you can get to my beloved import function and import os.popen. With this, we have SSTI :D. Heres the full payload:
+Using pythons 'attr' function. The only issue is we cant get by with just attr, this is because certain objects have underscores no matter what way you access it. For this we can use the byte representation of underscores in python: \x5f.
+Now, we can get to the builtins object in python which houses getitem which from there you can get to my beloved import function and import os.popen. With this, we have SSTI :D. Heres the full payload:
 
 ..\templates\errors\expxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx{{request|attr('application')|attr('\x5f\x5fglobals\x5f\x5f')|attr('\x5f\x5fgetitem\x5f\x5f')('\x5f\x5fbuiltins\x5f\x5f')|attr('\x5f\x5fgetitem\x5f\x5f')('\x5f\x5fimport\x5f\x5f')('os')|attr('popen')('ls')|attr('read')()}}
 
@@ -141,3 +141,4 @@ Anyways, after submitting this payload, you can just access it and run system co
 [ ADD IMAGE HERE ]
 
 You could also run any command you'd like of course.
+
