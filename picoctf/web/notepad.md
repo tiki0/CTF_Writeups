@@ -138,7 +138,7 @@ request|attr('application')|attr('\x5f\x5fglobals\x5f\x5f')|attr('\x5f\x5fgetite
 Now you can easily find a payload just like this online or an alternative but doing it myself is more fun and you learn more.
 Anyways, after submitting this payload, you can just access it and run system commands, I switch out 'ls' to 'cat /flag.txt' and you can read the flag as so:
 
-![]()
+![](images/Screenshot_20251001_014747.png)
 
 You could also run any command you'd like of course.
 
