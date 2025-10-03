@@ -124,7 +124,7 @@ Here was my original note I submitted as a test:
 after submitting this note, the server placed a file with the name 'expxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-TYTVPd8HE3I.html' in the errors directory.
 I could then access this file by passing an error parameter with the name of that file to the front page as so:
 
-![]()
+![](images/Screenshot_20251001_014830.png)
 
 Now, I need to be able to execute system commands, I could just read files but thats boring. Using the regular SSTI oneliner does not work because of the previously mentioned underscore '_' filtering, so we have to get creative.
 Using pythons 'attr' function. The only issue is we cant get by with just attr, this is because certain objects have underscores no matter what way you access it. For this we can use the byte representation of underscores in python: \x5f. 
