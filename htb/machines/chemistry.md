@@ -205,7 +205,7 @@ Running `curl http://localhost:8080` as rosa I see a whole other website running
 
 Port forwarding that to my machine and accessing the website I see this:
 
-![Port 8080 Website](chemistry_8080.png)
+![Port 8080 Website](../images/chemistry_8080.png)
 
 I'm quite sure it's root running this website as I also see this line in linpeas:
 
