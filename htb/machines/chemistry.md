@@ -374,5 +374,3 @@ https://labs.hackthebox.com/achievement/machine/1142698/631
 ![Pwned](../images/pwned.png)
 
 ---
-
-**Box Completed:** ✓
