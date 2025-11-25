@@ -320,16 +320,52 @@ Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your 
 Last login: Fri Oct 11 14:06:59 2024
 root@chemistry:~#
 ```
+## Post Root
 
----
+After getting root shell, I was curious as to what the root webapp was actually doing, I did not have read access to it as rosa but now i do so here it is, /opt/monitoring_site/app.py:
 
-## Flags
+```
+import aiohttp
+import aiohttp_jinja2
+import jinja2
+import os
+import json
+import re
+from aiohttp import web
+import subprocess
 
-**User Flag:** `/home/rosa/user.txt`
+async def list_services(request):
+    # Logic to retrieve and return the list of services
+    services = subprocess.check_output(['service', '--status-all']).decode('utf-8').split('\n')
+    return web.json_response({"services": services})
 
-**Root Flag:** `/root/root.txt`
+async def index(request):
+    # Load sample data from a JSON file
+    with open('data/data.json') as f:
+        data = json.load(f)
 
----
+    return aiohttp_jinja2.render_template('index.html', request, data)
+
+app = web.Application()
+aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader('templates'))
+
+app.router.add_get('/', index)
+app.router.add_static('/assets/', path='static/', follow_symlinks=True)
+app.router.add_get('/list_services', list_services)
+
+if __name__ == '__main__':
+    web.run_app(app, host='127.0.0.1', port=8080)
+```
+The vulnerability I exploited stems completely from the following line:
+```
+app.router.add_static('/assets/', path='static/', follow_symlinks=True)
+```
+That 'follow_symlinks=True' is what causes CVE-2024-23334.
+Apparently aiohttp doesn't validate whether the file being requested is within the webroot if that option is enabled.
+Maybe making it check whether it was in webroot broke the access to symlinks?
+I don't know, but what I do know is that that single little parameter enabled LFI on the whole website.
+
+Anyways, great box, it was really fun to do, and also fun to go back on a year later and revisit it to make this writeup.
 
 ## Note
 
