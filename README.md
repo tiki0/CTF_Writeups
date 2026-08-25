@@ -1,5 +1,10 @@
 # CTF_Writeups
 
+## Note
+
+Wiped my OS, switched to debian w/ i3, lost all my writeups. For anyone here from my resume heres my HTB:
+https://app.hackthebox.com/public/users/1142698
+
 ## About
 
 Hey, this is where I throw all my CTF writeups.
